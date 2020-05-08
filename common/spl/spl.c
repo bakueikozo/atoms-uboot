@@ -125,7 +125,7 @@ __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 	image_entry_noargs_t image_entry =
 			(image_entry_noargs_t) spl_image->entry_point;
 
-	debug("image entry point: 0x%X\n", spl_image->entry_point);
+	printf("image entry point: 0x%X\n", spl_image->entry_point);
 	image_entry();
 }
 
@@ -191,7 +191,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		spl_sfc_nor_load_image();
 		break;
 #endif
-#ifdef CONFIG_SFC_ANDN
+#ifdef CONFIG_SFC_NADN
 	case BOOT_DEVICE_SFC_NAND:
 		spl_sfc_nand_load_image();
 		break;

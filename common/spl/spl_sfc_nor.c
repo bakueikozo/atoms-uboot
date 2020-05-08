@@ -7,6 +7,7 @@
 #include <asm/arch/sfc.h>
 #include <asm/arch/spi.h>
 #include <asm/arch/clk.h>
+#include <linux/lzo.h>
 
 //#define TEST
 
@@ -51,10 +52,10 @@ static void sfc_set_read_reg(unsigned int cmd, unsigned int addr,
 	jz_sfc_writel(tmp, SFC_GLB);
 
 	if (data_en) {
-		tmp = (addr_len << ADDR_WIDTH_OFFSET) | CMDEN |
+		tmp = (addr_len << ADDR_WIDTH_OFFSET) | CMD_EN |
 			DATEEN | (cmd << CMD_OFFSET);
 	} else {
-		tmp = (addr_len << ADDR_WIDTH_OFFSET) | CMDEN |
+		tmp = (addr_len << ADDR_WIDTH_OFFSET) | CMD_EN |
 			(cmd << CMD_OFFSET);
 	}
 
@@ -162,12 +163,29 @@ void sfc_nor_load(unsigned int src_addr, unsigned int count, unsigned int dst_ad
 #endif
 	return ;
 }
+#ifdef CONFIG_SPL_LZOP
+void spl_sfc_nor_load_image(void)
+{
+	size_t dst_len;
+	struct image_header *header;
 
+	header = (struct image_header *)(CONFIG_UBOOT_OFFSET);
+
+	spl_parse_image_header(header);
+
+	sfc_nor_load(CONFIG_UBOOT_OFFSET, spl_image.size, CONFIG_DECMP_BUFFER_ADRS);
+
+	lzop_decompress((unsigned char *)(CONFIG_DECMP_BUFFER_ADRS+0x40),spl_image.size-0x40,
+			(unsigned char *)CONFIG_SYS_TEXT_BASE,&dst_len);
+
+	return ;
+}
+#else
 void spl_sfc_nor_load_image(void)
 {
 	struct image_header *header;
 
-	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE);/*zm:there is no header here, using default*/
 
 	spl_parse_image_header(header);
 
@@ -175,4 +193,5 @@ void spl_sfc_nor_load_image(void)
 
 	return ;
 }
+#endif
 

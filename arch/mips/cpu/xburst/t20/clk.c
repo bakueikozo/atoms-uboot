@@ -51,7 +51,7 @@ static char * cgu_name(int clk) {
 
 struct cgu cgu_clk_sel[CGU_CNT] = {
 	[DDR] = {1, CPM_DDRCDR, 30, CONFIG_DDR_SEL_PLL, {0, APLL, MPLL, -1}, 29, 28, 27},
-	[VPU] = {1, CPM_VPUCDR, 30, VPLL, {APLL, MPLL, VPLL, VPLL}, 29, 28, 27},
+	[VPU] = {1, CPM_VPUCDR, 30, MPLL, {APLL, MPLL, VPLL, VPLL}, 29, 28, 27},
 	[MACPHY] = {1, CPM_MACCDR, 30, MPLL, {APLL, MPLL, VPLL, VPLL}, 29, 28, 27},
 	[LCD] = {1, CPM_LPCDR, 30, VPLL, {APLL, MPLL, VPLL, VPLL}, 28, 27, 26},
 	[MSC] = {1, CPM_MSC0CDR, 31, CONFIG_CPU_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},

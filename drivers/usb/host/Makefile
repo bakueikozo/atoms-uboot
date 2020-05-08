@@ -33,7 +33,8 @@ COBJS-$(CONFIG_USB_ISP116X_HCD) += isp116x-hcd.o
 COBJS-$(CONFIG_USB_R8A66597_HCD) += r8a66597-hcd.o
 COBJS-$(CONFIG_USB_SL811HS) += sl811-hcd.o
 COBJS-$(CONFIG_USB_OHCI_S3C24XX) += ohci-s3c24xx.o
-
+# DWC
+COBJS-$(CONFIG_USB_DWC2) += dwc2.o
 # echi
 COBJS-$(CONFIG_USB_EHCI) += ehci-hcd.o
 COBJS-$(CONFIG_USB_EHCI_ARMADA100) += ehci-armada100.o utmi-armada100.o

@@ -34,7 +34,7 @@ static void ddrc_params_creator_ddr3(struct ddrc_reg *ddrc, struct ddr_params *p
 	int tmp;
 
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.tRTP,1);
-	ASSERT_MASK(tmp,6);
+	ASSERT_MASK(tmp,7);
 	ddrc->timing1.b.tRTP = tmp;
 
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.tCCD,1);
@@ -63,7 +63,7 @@ static void ddrc_params_creator_ddr3(struct ddrc_reg *ddrc, struct ddr_params *p
 	ddrc->timing5.b.tRTW = tmp;
 
 	ddrc->timing5.b.tWDLAT = ddrc->timing1.b.tWL - 1;
-	ddrc->timing5.b.tRDLAT = ddrc->timing2.b.tRL - 2;
+	ddrc->timing5.b.tRDLAT = DDR_tRDLAT;//ddrc->timing2.b.tRL - 2;
 
 	tmp = MAX(ps2cycle_ceil(p->private_params.ddr3_params.tXS,4),
 		ps2cycle_ceil(p->private_params.ddr3_params.tXSDLL,4));
@@ -113,7 +113,7 @@ static void ddrp_params_creator_ddr3(struct ddrp_reg *ddrp, struct ddr_params *p
 	case 5 ... 8:
 		ddrp->mr0.ddr3.WR = tmp - 4;
 		break;
-	case 9 ... 12:
+	case 9 ... 15:
 		ddrp->mr0.ddr3.WR = (tmp + 1) / 2;
 		break;
 	default:
@@ -188,23 +188,23 @@ static void ddrp_params_creator_ddr3(struct ddrp_reg *ddrp, struct ddr_params *p
 	/* DTPR_COMMON_SETTING(ddr3_params); */
 /* DTPR0 registers */
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.tMRD,1);
-	BETWEEN(tmp,4,7);
+	BETWEEN(tmp,4,6);
 	ddrp->dtpr0.b.tMRD = tmp - 4;
 
-	DDRP_TIMING_SET(0,ddr3_params,tRTP,3,2,6);
+	DDRP_TIMING_SET(0,ddr3_params,tRTP,3,2,9);
 
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.tCCD,1);
 	ASSERT_MASK(tmp - 4, 1);
 	BETWEEN(tmp,4,5);
 	ddrp->dtpr0.b.tCCD = tmp - 4;
 
-	DDRP_TIMING_SET(1,ddr3_params,tFAW,6,2,31);
+	DDRP_TIMING_SET(1,ddr3_params,tFAW,6,2,39);
 
 /* DTPR1 registers */
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.tMOD,1);
 	BETWEEN(tmp,12,15);
 	ddrp->dtpr1.b.tMOD = tmp - 12;
-	DDRP_TIMING_SET(1,ddr3_params,tRFC,8,0,255);
+	DDRP_TIMING_SET(1,ddr3_params,tRFC,6,0,63);
 
 #if CONFIG_DDR_CHIP_ODT_VAL
 	ddrp->dtpr1.b.tRTODT = 1; // for low power consumption.

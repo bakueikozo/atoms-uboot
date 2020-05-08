@@ -375,6 +375,8 @@ int spi_flash_bank_config(struct spi_flash *flash, u8 idcode0)
 		break;
 	case SPI_FLASH_STMICRO_IDCODE0:
 	case SPI_FLASH_WINBOND_IDCODE0:
+	case SPI_FLASH_GD25_IDCODE0:
+	case SPI_FLASH_MX25_IDCODE0:
 		flash->bank_read_cmd = CMD_EXTNADDR_RDEAR;
 		flash->bank_write_cmd = CMD_EXTNADDR_WREAR;
 		break;
@@ -461,12 +463,17 @@ static const struct {
 #ifdef CONFIG_SPI_FLASH_INGENIC_NAND
 	{ 0, 0xc8, spi_flash_probe_ingenic_nand, },
 #endif
+	{ 0, 0x5e, spi_flash_probe_ingenic, },
 	{ 0, 0xe0, spi_flash_probe_ingenic, },
 	{ 0, 0xc2, spi_flash_probe_ingenic, },
 	{ 0, 0xef, spi_flash_probe_ingenic, },
 	{ 0, 0x1c, spi_flash_probe_ingenic, },
 	{ 0, 0xF8, spi_flash_probe_ingenic, },
 	{ 0, 0x20, spi_flash_probe_ingenic, },
+	{ 0, 0x68, spi_flash_probe_ingenic, },
+	{ 0, 0xa1, spi_flash_probe_ingenic, },
+	{ 0, 0x0b, spi_flash_probe_ingenic, },
+	{ 0, 0x85, spi_flash_probe_ingenic, },
 #ifndef CONFIG_SPI_FLASH_INGENIC_NAND
 	{ 0, 0xc8, spi_flash_probe_ingenic, },
 #endif

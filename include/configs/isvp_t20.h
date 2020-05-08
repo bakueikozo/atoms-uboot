@@ -115,15 +115,15 @@
  * Boot arguments definitions.
  */
 #ifdef CONFIG_DDR2_128M
-#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=104M@0x0 ispmem=8M@0x6800000 rmem=16M@0x7000000"
+#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=96M@0x0 ispmem=8M@0x6000000 rmem=24M@0x6800000"
 #else
-#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=41700K@0x0 ispmem=8M@0x28B9000 rmem=15644K@0x30B9000"
+#define BOOTARGS_COMMON "console=ttyS1,115200n8 mem=32M@0x0 ispmem=8M@0x2000000 rmem=24M@0x2800000"
 #endif
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 	#define CONFIG_BOOTARGS BOOTARGS_COMMON " init=/linuxrc root=/dev/mmcblk0p2 rw rootdelay=1"
 #elif CONFIG_SFC_NOR
-        #define CONFIG_BOOTARGS BOOTARGS_COMMON " init=/linuxrc rootfstype=squashfs root=/dev/mtdblock2 rw mtdparts=jz_sfc:256k(boot),2048k(kernel),3392k(root),640k(driver),4736k(appfs),2048k(backupk),640k(backupd),2048k(backupa),256k(config),256k(para),-(flag)"
+	#define CONFIG_BOOTARGS BOOTARGS_COMMON " init=/linuxrc rootfstype=squashfs root=/dev/mtdblock2 rw mtdparts=jz_sfc:256k(boot),2560k(kernel),2048k(root),-(appfs)"
 #endif
 
 /**
@@ -136,8 +136,7 @@
 #endif
 
 #ifdef CONFIG_SFC_NOR
-#define CONFIG_BOOTCOMMAND "sdupdate; sdstart"
-/*#define CONFIG_BOOTCOMMAND "sdupdate;sf probe;sf read 0x80600000 0x40000 0x280000; bootm 0x80600000"*/
+	#define CONFIG_BOOTCOMMAND "sf probe;sf read 0x80600000 0x40000 0x280000; bootm 0x80600000"
 #endif /* CONFIG_SFC_NOR */
 
 /**
@@ -167,13 +166,13 @@
 #endif
 
 /* SFC */
-#define CONFIG_SFC_MIN_ALIGN 0x8000  /*0x1000->4K Erase,0x8000->32k 0x10000->64k*/
+#define CONFIG_SFC_MIN_ALIGN 0x1000  /*0x1000->4K Erase,0x8000->32k 0x10000->64k*/
 #if defined(CONFIG_SPL_SFC_SUPPORT)
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPI_SPL_CHECK
 #define CONFIG_JZ_SFC_PA
 #ifdef CONFIG_SPI_NAND
-#define CONFIG_UBOOT_OFFSET	(26  * 1024)
+#define CONFIG_UBOOT_OFFSET	CONFIG_SPL_MAX_SIZE/*(26  * 1024)*/
 #define CONFIG_SPI_NAND_BPP	(2048 +64)  /*Bytes Per Page*/
 #define CONFIG_SPI_NAND_PPB	(64)        /*Page Per Block*/
 #define CONFIG_SPL_SFC_NAND
@@ -185,7 +184,7 @@
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_FLASH_INGENIC
 #define CONFIG_SPI_FLASH
-#define CONFIG_UBOOT_OFFSET	(26  * 1024)
+#define CONFIG_UBOOT_OFFSET	CONFIG_SPL_MAX_SIZE/*(26  * 1024)*/
 #define CONFIG_SPL_SFC_NOR
 #define CONFIG_SPI_DUAL
 /*#define CONFIG_SPI_QUAD*/
@@ -236,7 +235,7 @@
 /**
  * Command configuration.
  */
-/*#define CONFIG_CMD_NET*/		/* networking support			*/
+#define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_BOOTD	/* bootd			*/
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
@@ -256,7 +255,17 @@
 #define CONFIG_AUTO_COMPLETE
 /*#define CONFIG_CMD_I2C*/
 
-#define CONFIG_AUTO_UPDATE			1
+/************************ USB CONFIG ***************************/
+#undef CONFIG_CMD_USB
+#ifdef CONFIG_CMD_USB
+#define CONFIG_USB_DWC2
+#define CONFIG_USB_DWC2_REG_ADDR 0x13500000
+#define CONFIG_USB_HOST_ETHER
+#define CONFIG_USB_ETHER_ASIX
+/* #define CONFIG_USB_STORAGE */
+#endif
+
+/*#define CONFIG_AUTO_UPDATE			1*/
 #ifdef CONFIG_AUTO_UPDATE
 	#define CONFIG_CMD_SDUPDATE		1
 #endif
@@ -299,7 +308,7 @@
 #define CONFIG_SYS_INIT_SP_OFFSET	0x400000
 #define CONFIG_SYS_LOAD_ADDR		0x82000000
 #define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x86000000
+#define CONFIG_SYS_MEMTEST_END		0x84000000
 
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
@@ -352,6 +361,11 @@
 #endif	/*CONFIG_SPL_NOR_SUPPORT*/
 
 #define CONFIG_SPL_MAX_SIZE		(26 * 1024)
+
+#undef CONFIG_SPL_LZOP
+#ifdef CONFIG_SPL_LZOP
+	#define CONFIG_DECMP_BUFFER_ADRS        0x80200000
+#endif
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SPL_SERIAL_SUPPORT

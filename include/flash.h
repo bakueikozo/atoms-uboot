@@ -24,7 +24,6 @@
 #ifndef _FLASH_H_
 #define _FLASH_H_
 
-#ifndef CONFIG_SYS_NO_FLASH
 /*-----------------------------------------------------------------------
  * FLASH Info: contains chip specific data, per FLASH bank
  */
@@ -59,6 +58,7 @@ typedef struct {
 #endif
 } flash_info_t;
 
+#ifndef CONFIG_SYS_NO_FLASH
 extern flash_info_t flash_info[]; /* info for FLASH chips	*/
 
 typedef unsigned long flash_sect_t;

@@ -43,6 +43,12 @@
 #include "jz_gpio/t10_gpio.c"
 #elif defined (CONFIG_T20)
 #include "jz_gpio/t20_gpio.c"
+#elif defined (CONFIG_T30)
+#include "jz_gpio/t30_gpio.c"
+#elif defined (CONFIG_T21)
+#include "jz_gpio/t21_gpio.c"
+#elif defined (CONFIG_T31)
+#include "jz_gpio/t31_gpio.c"
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -54,7 +60,12 @@ static inline is_gpio_from_chip(int gpio_num)
 
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 {
-	unsigned int base = GPIO_BASE + 0x100 * n;
+#ifdef CONFIG_SYS_UART_CONTROLLER_STEP
+	u32 step = CONFIG_SYS_UART_CONTROLLER_STEP;
+#else /* default */
+	u32 step = 0x100;
+#endif
+	unsigned int base = GPIO_BASE + step * n;
 
 	writel(func & 0x8? pins : 0, base + PXINTS);
 	writel(func & 0x4? pins : 0, base + PXMSKS);
@@ -66,8 +77,37 @@ void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins)
 	writel(func & 0x2? 0 : pins, base + PXPAT1C);
 	writel(func & 0x1? 0 : pins, base + PXPAT0C);
 
-	writel(func & 0x10? pins : 0, base + PXPEC);
-	writel(func & 0x10? 0 : pins, base + PXPES);
+	writel(func & 0x10? 0 : pins, base + PXPUENC);
+	writel(func & 0x10? pins : 0, base + PXPUENS);
+
+	writel(func & 0x20? 0 : pins, base + PXPDENC);
+	writel(func & 0x20? pins : 0, base + PXPDENS);
+}
+
+void gpio_set_driver_strength(enum gpio_port n, unsigned int pins, int ds)
+{
+#ifdef CONFIG_SYS_UART_CONTROLLER_STEP
+	u32 step = CONFIG_SYS_UART_CONTROLLER_STEP;
+#else /* default */
+	u32 step = 0x100;
+#endif
+	unsigned int base = GPIO_BASE + step * n;
+    int i = 0;
+    for (i = 0; i < sizeof(pins)*8; i++) {
+       if (pins&(0x1<<i)) {
+           if (2 == ds) {
+               writel(0x3<<((i%16)*2), base + (i<16?PXPDSLC:PXPDSHC));
+           } else if (4 == ds) {
+               writel(0x1<<((i%16)*2), base + (i<16?PXPDSLS:PXPDSHS));
+               writel(0x1<<((i%16)*2+1), base + (i<16?PXPDSLC:PXPDSHC));
+           } else if (8 == ds) {
+               writel(0x1<<((i%16)*2), base + (i<16?PXPDSLC:PXPDSHC));
+               writel(0x1<<((i%16)*2+1), base + (i<16?PXPDSLS:PXPDSHS));
+           } else if (12 == ds) {
+               writel(0x3<<((i%16)*2), base + (i<16?PXPDSLS:PXPDSHS));
+           }
+       }
+    }
 }
 
 int gpio_request(unsigned gpio, const char *label)
@@ -178,22 +218,41 @@ int gpio_direction_output(unsigned gpio, int value)
 	return 0;
 }
 
-void gpio_enable_pull(unsigned gpio)
+void gpio_enable_pull_up(unsigned gpio)
 {
 	unsigned port= gpio / 32;
 	unsigned pin = gpio % 32;
 
-	writel(1 << pin, GPIO_PXPEC(port));
+	writel(1 << pin, GPIO_PXPUEN(port));
+	writel(1 << pin, GPIO_PXPUENS(port));
 }
 
-void gpio_disable_pull(unsigned gpio)
+void gpio_disable_pull_up(unsigned gpio)
 {
 	unsigned port= gpio / 32;
 	unsigned pin = gpio % 32;
 
-	writel(1 << pin, GPIO_PXPES(port));
+	writel(1 << pin, GPIO_PXPUENC(port));
+	writel(0 << pin, GPIO_PXPUEN(port));
 }
 
+void gpio_enable_pull_down(unsigned gpio)
+{
+	unsigned port= gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXPDEN(port));
+	writel(1 << pin, GPIO_PXPDENS(port));
+}
+
+void gpio_disable_pull_down(unsigned gpio)
+{
+	unsigned port= gpio / 32;
+	unsigned pin = gpio % 32;
+
+	writel(1 << pin, GPIO_PXPDENC(port));
+	writel(0 << pin, GPIO_PXPDEN(port));
+}
 void gpio_set_pull_dir(unsigned gpio, int pull)
 {
 	unsigned port= gpio / 32;
@@ -268,6 +327,8 @@ void gpio_init(void)
 	for (i = 0; i < n; i++) {
 		g = &gpio_func[i];
 		gpio_set_func(g->port, g->func, g->pins);
+        if (g->driver_strength)
+            gpio_set_driver_strength(g->port, g->pins, g->driver_strength);
 	}
 	g = &uart_gpio_func[CONFIG_SYS_UART_INDEX];
 #else

@@ -53,7 +53,7 @@ static void ddrc_params_creator_ddr2(struct ddrc_reg *ddrc, struct ddr_params *p
 		assert(1);
 	}
 	if(ddrc->timing2.b.tRL > 1)
-		ddrc->timing5.b.tRDLAT = ddrc->timing2.b.tRL - 2;
+		ddrc->timing5.b.tRDLAT = ddrc->timing2.b.tRL - 3;
 	else{
 		out_error("DDR_RL too small! check %s %d\n",__FILE__,__LINE__);
 		assert(1);
@@ -106,7 +106,13 @@ static void ddrp_params_creator_ddr2(struct ddrp_reg *ddrp, struct ddr_params *p
 		assert(1);
 	}
 
+#ifdef DDR2_CHIP_MR0_DLL_RST
+	ddrp->mr0.ddr2.DR = 1;
+#endif
+
 	tmp = ps2cycle_ceil(p->private_params.ddr2_params.tWR, 1);
+	if (tmp > 8)
+		tmp = 8;
 	BETWEEN(tmp,2,9);  // debug, BETWEEN(tmp,2,6)
 	ddrp->mr0.ddr2.WR = tmp - 1;
 
@@ -135,14 +141,14 @@ static void ddrp_params_creator_ddr2(struct ddrp_reg *ddrp, struct ddr_params *p
 	/* AL = 0,other's cann't support by controller. */
 	tmp = p->bl / 2 +
 		MAX(ps2cycle_ceil(p->private_params.ddr2_params.tRTP,1),2) - 2;
-	BETWEEN(tmp,2,7);
+	BETWEEN(tmp,2,9);
 	ddrp->dtpr0.b.tRTP = tmp;
 	ddrp->dtpr0.b.tCCD = 0;
 
 	/* DTPR1 registers */
 	ddrp->dtpr1.b.tAOND_tAOFD = 0;  //non-standard DDR2 will be setting to 1.
 
-	DDRP_TIMING_SET(1,ddr2_params,tFAW,6,2,31);
+	DDRP_TIMING_SET(1,ddr2_params,tFAW,6,2,39);
 
 	/* DTPR2 registers */
 	tmp = MAX(

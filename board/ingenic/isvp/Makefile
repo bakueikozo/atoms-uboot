@@ -27,6 +27,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).o
 
 COBJS-y	:= board.o
+COBJS-$(CONFIG_USB_DWC2) += usb_init.o
 #COBJS-$(CONFIG_JZ_LCD_V12) += lcd.o
 
 SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)

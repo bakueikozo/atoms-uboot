@@ -60,6 +60,7 @@
 	 do{								\
 		 int tmp;						\
 		 tmp = ps2cycle_ceil(p->private_params.param.name,1);	\
+		 if (tmp > max) tmp=max;               \
 		 ASSERT_MASK(tmp,bitcount);				\
 		 BETWEEN(tmp,min,max);					\
 		 ddrp->dtpr##n.b.name = tmp;				\

@@ -250,7 +250,7 @@ static void local_serial_putc(const char c)
 	writeb((u8)c, &uart->rbr_thr_dllr);
 
 	/* Wait for fifo to shift out some bytes */
-	while (!((readb(&uart->lsr) & (UART_LSR_TDRQ | UART_LSR_TEMT)) == 0x60))		;
+	while (!((readb(&uart->lsr) & (UART_LSR_TDRQ | UART_LSR_TEMT)) == 0x60));
 }
 
 static void local_serial_puts(const char *s)

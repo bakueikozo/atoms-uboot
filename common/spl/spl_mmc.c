@@ -28,11 +28,13 @@
 #include <mmc.h>
 #include <fat.h>
 #include <version.h>
+#include <linux/lzo.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static int mmc_load_image_raw(struct mmc *mmc, unsigned long sector)
 {
+	size_t dst_len;
 	unsigned long err;
 	u32 image_size_sectors;
 	struct image_header *header;
@@ -54,11 +56,16 @@ static int mmc_load_image_raw(struct mmc *mmc, unsigned long sector)
 	/* convert size to sectors - round up */
 	image_size_sectors = (spl_image.size + mmc->read_bl_len - 1) /
 				mmc->read_bl_len;
-
+#ifdef CONFIG_SPL_LZOP
+	err = mmc->block_dev.block_read(0, sector, image_size_sectors,
+					(void *)CONFIG_DECMP_BUFFER_ADRS);
+	lzop_decompress((unsigned char *)(CONFIG_DECMP_BUFFER_ADRS+0x40),(size_t)spl_image.size-0x40,
+			(unsigned char *)CONFIG_SYS_TEXT_BASE,&dst_len);
+#else
 	/* Read the header too to avoid extra memcpy */
 	err = mmc->block_dev.block_read(0, sector, image_size_sectors,
 					(void *)spl_image.load_addr);
-
+#endif
 end:
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 	if (err == 0)

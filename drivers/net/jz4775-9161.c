@@ -409,21 +409,6 @@ static int jz_init(struct eth_device* dev, bd_t * bd)
 	tx_desc = (DmaDesc *)((unsigned long)_tx_desc | 0xa0000000);
 	rx_desc = (DmaDesc *)((unsigned long)_rx_desc | 0xa0000000);
 
-#if (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RMII)
-	u32 cpm_mphyc = 0;
-	cpm_mphyc = read_cpm_mphyc();
-	cpm_mphyc &= ~0x7;
-	cpm_mphyc |= 0x4;
-	write_cpm_mphyc(cpm_mphyc);
-#elif (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RGMII)
-	u32 cpm_mphyc = 0;
-	cpm_mphyc = read_cpm_mphyc();
-	cpm_mphyc |= 0x1<<31;
-	cpm_mphyc &= ~0x7;
-	cpm_mphyc |= 0x1;
-	write_cpm_mphyc(cpm_mphyc);
-#endif //CONFIG_NET_GMAC_PHY_MODE
-
 	/* reset GMAC, prepare to search phy */
 	synopGMAC_reset(gmacdev);
 
@@ -514,9 +499,15 @@ static void jz_halt(struct eth_device *dev)
 	synopGMAC_tx_enable(gmacdev);
 }
 
+extern s32 synopGMAC_read_phy_reg(u32 *RegBase,u32 PhyBase, u32 RegOffset, u16 * data);
+extern s32 synopGMAC_write_phy_reg(u32 *RegBase, u32 PhyBase, u32 RegOffset, u16 data);
 int jz_net_initialize(bd_t *bis)
 {
 	struct eth_device *dev;
+	u32 cpm_mphyc = 0;
+	int phy_id;
+	u16 data;
+	s32 status = -ESYNOPGMACNOERR;
 /*
 	gmacdev = (synopGMACdevice *)malloc(sizeof(synopGMACdevice));
 	if(gmacdev == NULL) {
@@ -605,12 +596,12 @@ int jz_net_initialize(bd_t *bis)
 	/* initialize t15 gmac gpio */
 	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_0, 0xFFEFFFC0);
 	gpio_set_func(GPIO_PORT_E, GPIO_FUNC_0, 3<<12); //new gmac GPIO(MT10_core_20140904_v1_hefei.bin)
-#elif defined (CONFIG_T10) || defined (CONFIG_T20)
+#elif defined (CONFIG_T10) || defined (CONFIG_T20) || defined (CONFIG_T30) || defined (CONFIG_T21) || defined (CONFIG_T31)
 	/* initialize t10 gmac gpio */
 	gpio_set_func(GPIO_PORT_B, GPIO_FUNC_0, 0x1EFC0);
 #endif
 
-#else
+#else /* CONFIG_FPGA */
 
 #if (CONFIG_NET_PHY_TYPE == PHY_TYPE_DM9161)
 	/* reset PE10 */
@@ -648,9 +639,6 @@ int jz_net_initialize(bd_t *bis)
 
 #if (CONFIG_NET_PHY_TYPE == PHY_TYPE_88E1111)
 
-	int phy_id;
-	u16 data;
-	s32 status = -ESYNOPGMACNOERR;
 #if (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RGMII)
 
 	phy_id = synopGMAC_search_phy(gmacdev);
@@ -697,6 +685,13 @@ int jz_net_initialize(bd_t *bis)
 			break;
 		}
 	}
+#else
+    phy_id = synopGMAC_search_phy(gmacdev);
+    if (phy_id >= 0) {
+        gmacdev->PhyBase = phy_id;
+    } else {
+        printf("====>PHY not found!");
+    }
 #endif //CONFIG_NET_PHY_TYPE
 	udelay(100000);
 
@@ -719,6 +714,100 @@ int jz_net_initialize(bd_t *bis)
 
 	eth_register(dev);
 
+#if (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RMII)
+	cpm_mphyc = read_cpm_mphyc();
+	cpm_mphyc &= ~0x7;
+	cpm_mphyc |= 0x4;
+	write_cpm_mphyc(cpm_mphyc);
+#elif (CONFIG_NET_GMAC_PHY_MODE == GMAC_PHY_RGMII)
+	cpm_mphyc = read_cpm_mphyc();
+	cpm_mphyc |= 0x1<<31;
+	cpm_mphyc &= ~0x7;
+	cpm_mphyc |= 0x1;
+	write_cpm_mphyc(cpm_mphyc);
+#endif //CONFIG_NET_GMAC_PHY_MODE
+
 	return 1;
 }
 
+static int do_ethphy(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	const char *cmd;
+	int ret = 0;
+
+	/* need at least two arguments */
+	if (argc < 2)
+		goto usage;
+
+    cmd = argv[1];
+    --argc;
+    ++argv;
+
+    if (strcmp(cmd, "read") == 0) {
+        unsigned long addr;
+        char *endp;
+        if (argc != 2) {
+            ret = -1;
+            goto done;
+        }
+        addr = simple_strtoul(argv[1], &endp, 16);
+        if (*argv[1] == 0 || *endp != 0) {
+            ret = -1;
+            goto done;
+        }
+        u16 data;
+        s32 status = -ESYNOPGMACNOERR;
+        status = synopGMAC_read_phy_reg((u32 *)gmacdev->MacBase, gmacdev->PhyBase, addr, &data);
+        if(status) {
+            printf("%s,%d:read mac register error\n", __func__, __LINE__);
+        }
+        printf("phy read 0x%x = 0x%x\n",
+                addr, data);
+
+    } else if (strcmp(cmd, "write") == 0) {
+        unsigned long addr;
+        u16 data;
+        char *endp;
+        if (argc != 3) {
+            ret = -1;
+            goto done;
+        }
+        addr = simple_strtoul(argv[1], &endp, 16);
+        if (*argv[1] == 0 || *endp != 0) {
+            ret = -1;
+            goto done;
+        }
+        data = simple_strtoul(argv[2], &endp, 16);
+        if (*argv[2] == 0 || *endp != 0) {
+            ret = -1;
+            goto done;
+        }
+
+        s32 status = -ESYNOPGMACNOERR;
+        printf("phy write 0x%x = 0x%x\n",
+                addr, data);
+        status = synopGMAC_write_phy_reg((u32 *)gmacdev->MacBase, gmacdev->PhyBase, addr, data);
+        if(status) {
+            printf("%s,%d:write phy register error\n", __func__, __LINE__);
+        }
+
+    } else {
+        ret = -1;
+        goto done;
+    }
+    return ret;
+
+done:
+
+	if (ret != -1)
+		return ret;
+usage:
+	return CMD_RET_USAGE;
+}
+
+U_BOOT_CMD(
+	ethphy,	4,	1,	do_ethphy,
+    "ethphy contrl",
+	"\nethphy read addr\n"
+	"ethphy write addr data\n"
+);

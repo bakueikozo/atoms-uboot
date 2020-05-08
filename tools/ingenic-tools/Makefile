@@ -29,6 +29,8 @@ DDR-$(CONFIG_DDR_PARAMS_CREATOR)	+= ddr_params_creator ddr_reg_values.h
 MBR-$(CONFIG_MBR_CREATOR)		+= mbr_creator mbr.bin
 GPT-$(CONFIG_GPT_CREATOR)		+= mbr-gpt.bin
 SPI-$(CONFIG_SPI_SPL_CHECK)		+= spi_checksum
+SPI-$(CONFIG_SFC_NAND)         	+= sfc_timing_val.h
+SPI-$(CONFIG_SFC_NAND)         	+= sfc_nand_params.h
 SPL-$(CONFIG_SPL_PARAMS_FIXER)		+= spl_params_fixer
 #IMG2RLE-$(CONFIG_RLE_LCD_LOGO)          += img2rle
 #BIN2ARRAY-$(CONFIG_RLE_LCD_LOGO)        += bin2array
@@ -68,6 +70,10 @@ $(foreach f,$(DDR-TYPE-y), \
 
 $(obj)ddr_reg_values.h:	$(obj)ddr_params_creator
 	$(OBJTREE)/tools/ingenic-tools/ddr_params_creator > $(OBJTREE)/include/generated/$@
+$(obj)sfc_timing_val.h: $(obj)sfc_timing_params
+	$(OBJTREE)/tools/ingenic-tools/sfc_timing_params > $(OBJTREE)/include/generated/$@
+$(obj)sfc_nand_params.h: $(obj)sfc_nand_params
+	$(OBJTREE)/tools/ingenic-tools/sfc_nand_params > $(OBJTREE)/include/generated/$@
 endif
 $(obj)mbr_creator:	mbr_creator.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
@@ -107,6 +113,12 @@ $(obj)spi_checksum:	spi_checksum.c
 $(obj)spl_params_fixer:	spl_params_fixer.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
+$(obj)sfc_timing_params: sfc_timing_params.c
+	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTSTRIP) $@
+
+$(obj)sfc_nand_params: nand_device/
+	make -C $<
 
 clean:
 	rm -f $(TOOLS) $(obj).depend  \
@@ -115,7 +127,9 @@ clean:
 		$(TOPDIR)/board/$(BOARDDIR)/logo/*.rle \
 		$(TOPDIR)/board/$(BOARDDIR)/charge_logo/*.rle \
 		$(obj)*.o \
-		$(obj)ddr_params_creator
+		$(obj)ddr_params_creator \
+		$(obj)sfc_nand_params \
+		$(obj)sfc_timing_params
 
 distclean:	clean
 

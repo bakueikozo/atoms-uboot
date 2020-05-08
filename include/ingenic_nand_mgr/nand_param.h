@@ -23,6 +23,8 @@
 
 typedef struct _PartitionInfo PartitionInfo;
 typedef struct _Nandppt Nandppt;
+typedef struct _MTDPartitionInfo MTDPartitionInfo;
+typedef struct _MTDNandppt MTDNandppt;
 typedef struct __ui_plat_ex_partition ui_plat_ex_partition;
 
 struct __ui_plat_ex_partition {
@@ -51,6 +53,23 @@ struct _PartitionInfo{
 	unsigned char  nand_driver_strength;					/* the strength of nand driver */
 };
 
+struct _MTDNandppt {
+	char name[MAX_NAME_SIZE];                               /* the name of patition*/
+	int offset;
+	int size;
+	int managermode;                        /*0: MTD mode, 1: UBI mode*/
+	ui_plat_ex_partition ui_ex_partition[MUL_PARTS];
+};
+
+struct _MTDPartitionInfo {
+	MTDNandppt ndppt[MAX_PART_NUM];         /* patition */
+	int ptcount;                            /* the number of patition */
+	int rbcount;                            /* the number of rb */
+	int rb_gpio[MAX_RB_COUNT];              /* the gpio pin of rb */
+	int gpio_wp;                            /* the gpio pin of wp */
+	unsigned char  rb_pulldown_strength[MAX_RB_COUNT];              /* the strength of the pin of rb */
+	unsigned char  nand_driver_strength;                            /* the strength of nand driver */
+};
 
 /**
  *  * struct __nand_timing - NAND Flash Device timing
@@ -119,6 +138,11 @@ typedef struct __nand_flash_param {
 	nand_timing_param timing;
 	optionalcmd_param *optcmd;
 } nand_flash_param;
+
+struct mtd_nand_params {
+	nand_flash_param nand_params;
+	MTDPartitionInfo pinfo;
+};
 
 
 int nand_probe_burner(PartitionInfo *pinfo, nand_flash_param *nand_info_ids,int nand_nm,int eraseall,unsigned int *pt_startadd_offset,int ops_pt_cnt);

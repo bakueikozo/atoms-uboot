@@ -36,7 +36,12 @@
 #define AU_UBOOT	"u-boot"
 #define AU_KERNEL	"kernel"
 #define AU_ROOTFS	"rootfs"
-#define AU_DRIVERS	"drivers"
+
+#define AU_APP	    "app"
+#define AU_KBACK	"kback"
+#define AU_ABACK	"aback"
+#define AU_CFG	    "cfg"
+#define AU_PARA	    "para"
 #define AU_FW		"demo.bin"
 
 struct flash_layout {
@@ -55,13 +60,24 @@ struct medium_interface {
 #define AU_FL_UBOOT_ST		0x0
 #define AU_FL_UBOOT_ND		0x40000
 #define AU_FL_KERNEL_ST		0x40000
-#define AU_FL_KERNEL_ND		0x240000
-#define AU_FL_ROOTFS_ST		0x240000
-#define AU_FL_ROOTFS_ND		0x590000
-#define AU_FL_DRIVERS_ST	0x590000
-#define AU_FL_DRIVERS_ND	0x630000
+#define AU_FL_KERNEL_ND		0x230000
+#define AU_FL_ROOTFS_ST		0x230000
+#define AU_FL_ROOTFS_ND		0x600000
+
+#define AU_FL_APP_ST		0x600000
+#define AU_FL_APP_ND		0x9d0000
+#define AU_FL_KBACK_ST		0x9d0000
+#define AU_FL_KBACK_ND		0xbc0000
+#define AU_FL_ABACK_ST		0xbc0000
+#define AU_FL_ABACK_ND		0xf90000
+#define AU_FL_CFG_ST		0xf90000
+#define AU_FL_CFG_ND		0xff0000
+#define AU_FL_PARA_ST		0xff0000
+#define AU_FL_PARA_ND		0x1000000
+
+
 #define AU_FL_FW_ST		0x40000
-#define AU_FL_FW_ND		0xad0000
+#define AU_FL_FW_ND		0x9d0000
 
 static int au_stor_curr_dev; /* current device */
 
@@ -69,20 +85,20 @@ static int au_stor_curr_dev; /* current device */
 #define IDX_UBOOT	0
 #define IDX_KERNEL	1
 #define IDX_ROOTFS	2
-#define IDX_DRIVERS	3
-#define IDX_FW		4
+
+/*#define IDX_DRIVERS	3 */
+#define IDX_FW		3
 
 #define WAIT_SECS	2
 
 /* max. number of files which could interest us */
-#define AU_MAXFILES 5
+#define AU_MAXFILES 4
 
 /* pointers to file names */
 char *aufile[AU_MAXFILES] = {
 	AU_UBOOT,
 	AU_KERNEL,
 	AU_ROOTFS,
-	AU_DRIVERS,
 	AU_FW
 };
 
@@ -91,7 +107,6 @@ long ausize[AU_MAXFILES] = {
 	AU_FL_UBOOT_ND - AU_FL_UBOOT_ST,
 	AU_FL_KERNEL_ND - AU_FL_KERNEL_ST,
 	AU_FL_ROOTFS_ND - AU_FL_ROOTFS_ST,
-	AU_FL_DRIVERS_ST - AU_FL_DRIVERS_ND,
 	AU_FL_FW_ND - AU_FL_FW_ST
 };
 
@@ -105,29 +120,31 @@ struct flash_layout aufl_layout[AU_MAXFILES] = {
 
 /* where to load files into memory */
 #define LOAD_ADDR ((unsigned char *)0x82000000)
-#define OFFSET_ADDR ((unsigned char *)0xad0000)
+#define OFFSET_ADDR ((unsigned char *)0x9d0000)
 #define PARA_ADDR ((unsigned char *)0xff0000)
 #define POFFSET_ADDR ((unsigned char *)0x83000000)
+#define PPOFFSET_ADDR ((unsigned char *)0x84000000)
 #define PARA_LEN ((unsigned long)0x10000)
-#define Kernal_LEN ((unsigned long)0x200000)
-#define Drivers_LEN ((unsigned long)0xa0000)
-#define App_LEN ((unsigned long)0x4a0000)
-#define Rootfs_LEN ((unsigned long)0x350000)
-#define DRIVERS_ADDR ((unsigned long)0xcd0000)
-#define APP_ADDR ((unsigned long)0xd70000)
-#define Kernaldrivers_LEN ((unsigned long)0x2a0000)
+#define Kernal_LEN ((unsigned long)0x1f0000)
+#define App_LEN ((unsigned long)0x3d0000)
+#define Rootfs_LEN ((unsigned long)0x3d0000)
+#define APP_ADDR ((unsigned long)0x600000)
+#define KernalApp_LEN ((unsigned long)0x5c0000)
+#define BACK_KERNEL_ADDR ((unsigned long)0x009d0000)
+#define BACK_KERNEL_LEN  ((unsigned long)0x001f0000)
+#define BACK_RA_ADDR ((unsigned long)0x00bc0000)
+#define BACK_RA_LEN  ((unsigned long)0x003d0000)
 
 /* the app is the largest image */
-#define MAX_LOADSZ (ausize[IDX_FW]+64)
+#define MAX_LOADSZ (ausize[IDX_FW])
 
-int LOAD_ID = 4; //default update all
+int LOAD_ID = 3; //default update all 
 
 static int au_check_cksum_valid(int idx, long nbytes)
 {
 	image_header_t *hdr;
 	unsigned long checksum;
-	
-	printf("jiabo_au_check_cksum_valid!!!!!!!!!!!!!!!!!!!!!!!!\n");
+
 	hdr = (image_header_t *)LOAD_ADDR;
 
 	if (nbytes != (sizeof(*hdr) + ntohl(hdr->ih_size))) {
@@ -232,14 +249,13 @@ static int au_do_update(int idx, long sz)
 	image_header_t *hdr;
 	unsigned long start, len;
 	unsigned long write_len;
-	unsigned long read_len;
+/*	unsigned long read_len; */
 	int rc;
 	int i=0;
 	char *buf = (char *)LOAD_ADDR;
-	char *pbuf;
+	char *pbuf = (char *)PPOFFSET_ADDR;
 	char *ppbuf = (char *)POFFSET_ADDR;
-	printf("jiabo_au_do_update!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	//hdr = (image_header_t *)LOAD_ADDR;	
+	
 
 	start = aufl_layout[idx].start;
 	len = aufl_layout[idx].end - aufl_layout[idx].start;
@@ -247,35 +263,34 @@ static int au_do_update(int idx, long sz)
 	printf("start=%x\n",aufl_layout[idx].end);
 	printf("len=%x\n",len);	
 	printf("flash check read...\n");
-	rc = flash->read(flash, PARA_ADDR, PARA_LEN, ppbuf);
-	if (!ppbuf) {
+	rc = flash->read(flash, PARA_ADDR, PARA_LEN, buf);
+	if (!buf) {
 		puts("Failed to map physical memory\n");
 		return 1;
 	}
 	else
 	{
-		while(strncmp(ppbuf,"FWGRADEUP",9) != 0)
+		//printf("buf:%64s\n",buf);
+		while(strncmp(buf,"FWGRADEUP",9) != 0)
 		{
-			*ppbuf++;
+			buf++;
 			i++;
-			if(i== (PARA_LEN)-9)
+			if(i == (PARA_LEN)-9)
 			{
 				printf("FWGRADEUP not find !!!!!!!!!\n");
 				break;
 			}
 		}
-		
-		//printf("ppbuf:%10s\n",ppbuf);
 
-		if(strncmp(ppbuf,"FWGRADEUP=",10) == 0)
+		if(strncmp(buf,"FWGRADEUP=",10) == 0)
 		{
-			if(strncmp(ppbuf+10,"kernel+drivers",10) == 0)
+			if(strncmp(buf+10,"kernel+app",10) == 0)
 			{
-				printf("FWGRADEUP=kernel+drivers!!!!!!!!!!!!!\n");				
+				printf("FWGRADEUP=kernel+app!!!!!!!!!!!!!\n");				
 
 				printf("back flash read...\n");
-				rc = flash->read(flash, OFFSET_ADDR, Kernaldrivers_LEN, buf);
-				if (!buf) 
+				rc = flash->read(flash, BACK_KERNEL_ADDR, Kernal_LEN, pbuf);
+				if (!pbuf) 
 				{
 					puts("Failed to map physical memory\n");
 					return 1;
@@ -289,29 +304,37 @@ static int au_do_update(int idx, long sz)
 					printf("SPI kernel flash sector erase failed\n");
 					return 1;
 				}
-					
-				/* erase the address range.*/
-				printf("drivers flash erase...\n");
-				rc = flash->erase(flash, AU_FL_DRIVERS_ST, Drivers_LEN);
-				if (rc) 
-				{
-					printf("SPI drivers flash sector erase failed\n");
-					return 1;
-				}
 
-				pbuf = map_physmem((unsigned long)LOAD_ADDR, Kernaldrivers_LEN, MAP_WRBACK);
-
-				/* copy the data from RAM to FLASH */
 				printf("kernel flash write...\n");
-				rc = flash->write(flash, AU_FL_KERNEL_ST, Kernal_LEN, buf);
+				rc = flash->write(flash, AU_FL_KERNEL_ST, Kernal_LEN, pbuf);
 				if (rc) 
 				{
 					printf("SPI kernel flash write failed, return %d\n", rc);
 					return 1;
 				}
+				
+				rc = flash->read(flash, BACK_RA_ADDR, App_LEN, ppbuf);
+				if (!ppbuf) 
+				{
+					puts("Failed to map physical memory\n");
+					return 1;
+				}	
 
-				printf("drivers flash write...\n");
-				rc = flash->write(flash, AU_FL_DRIVERS_ST, Drivers_LEN, buf + Kernal_LEN);
+				/* erase the address range.*/
+				printf("app flash erase...\n");
+				rc = flash->erase(flash, AU_FL_APP_ST, App_LEN);
+				if (rc) 
+				{
+					printf("SPI app flash sector erase failed\n");
+					return 1;
+				}
+				/*
+				pbuf = map_physmem((unsigned long)LOAD_ADDR, KernalApp_LEN, MAP_WRBACK);
+				*/
+				/* copy the data from RAM to FLASH */
+
+				printf("app flash write...\n");
+				rc = flash->write(flash, AU_FL_APP_ST, App_LEN, ppbuf);
 				if (rc) 
 				{
 					printf("SPI drivers flash write failed, return %d\n", rc);
@@ -328,19 +351,59 @@ static int au_do_update(int idx, long sz)
 					return 1;
 				}
 
-				unmap_physmem(pbuf,read_len);	
-			}	
-			else if(strncmp(ppbuf+10,"kernel",6) == 0)
+				/*unmap_physmem(pbuf,read_len);	*/
+			}
+			else if(strncmp(buf+10,"kernel+rootfs",13) == 0)
 			{
-				printf("FWGRADEUP=Kernel!!!!!!!!!!!!!\n");
-				printf("back flash read...\n");
-				rc = flash->read(flash, OFFSET_ADDR, Kernal_LEN, buf);
-				if (!buf) 
+				printf("FWGRADEUP=kernel+rootfs!!!!!!!!!!!!!\n");				
+
+				rc = flash->read(flash, BACK_KERNEL_ADDR, Kernal_LEN+Rootfs_LEN, pbuf);
+				if (!pbuf) 
 				{
 					puts("Failed to map physical memory\n");
 					return 1;
 				}	
+		
+				/* erase the address range.*/
+				printf("kenral flash erase...\n");
+				rc = flash->erase(flash, AU_FL_KERNEL_ST, Kernal_LEN+Rootfs_LEN);
+				if (rc) 
+				{
+					printf("SPI kernel+rootfs flash sector erase failed\n");
+					return 1;
+				}
+				/*
+				pbuf = map_physmem((unsigned long)LOAD_ADDR, Kernal_LEN, MAP_WRBACK);
+				*/
+				printf("kernel flash write...\n");
+				rc = flash->write(flash, AU_FL_KERNEL_ST, Kernal_LEN+Rootfs_LEN, pbuf);
+				if (rc) 
+				{
+					printf("SPI kernel flash write failed, return %d\n", rc);
+					return 1;
+				}
 					
+				/* earse the data from RAM to FLASH */
+				printf("flag flash earse...\n");
+
+				rc = flash->erase(flash, PARA_ADDR, PARA_LEN);
+				if (rc) 
+				{
+					printf("SPI flash sector erase failed\n");
+					return 1;
+				}
+			}	
+			else if(strncmp(buf+10,"kernel",6) == 0)
+			{
+				printf("FWGRADEUP=Kernel!!!!!!!!!!!!!\n");
+				printf("back flash read...\n");
+				rc = flash->read(flash, BACK_KERNEL_ADDR, Kernal_LEN, pbuf);
+				if (!pbuf) 
+				{
+					puts("Failed to map physical memory\n");
+					return 1;
+				}	
+
 				/* erase the address range.*/
 				printf("Kernal flash erase...\n");
 				rc = flash->erase(flash, AU_FL_KERNEL_ST, Kernal_LEN);
@@ -349,17 +412,17 @@ static int au_do_update(int idx, long sz)
 					printf("SPI kernal flash sector erase failed\n");
 					return 1;
 				}
-
+				/*
 				pbuf = map_physmem((unsigned long)LOAD_ADDR, Kernal_LEN, MAP_WRBACK);
-
+				*/
 				printf("Kernal flash write...\n");
-				rc = flash->write(flash, AU_FL_KERNEL_ST, Kernal_LEN, buf);
+				rc = flash->write(flash, AU_FL_KERNEL_ST, Kernal_LEN, pbuf);
 				if (rc) 
 				{
 					printf("SPI kernal flash write failed, return %d\n", rc);
 					return 1;
 				}
-			
+
 				/* earse the data from RAM to FLASH */
 				printf("flag flash earse...\n");
 
@@ -370,38 +433,38 @@ static int au_do_update(int idx, long sz)
 					return 1;
 				}
 
-				unmap_physmem(pbuf,read_len);	
+				/*unmap_physmem(pbuf,read_len);	*/
 			}	
-			else if(strncmp(ppbuf+10,"drivers",7) == 0)
+			else if(strncmp(buf+10,"rootfs",6) == 0)
 			{
-				printf("FWGRADEUP=drivers!!!!!!!!!!!!!\n");
+				printf("FWGRADEUP=rootfs!!!!!!!!!!!!!\n");
 				printf("back flash read...\n");
-				rc = flash->read(flash, DRIVERS_ADDR, Drivers_LEN, buf);
-				if (!buf) 
+				rc = flash->read(flash, BACK_RA_ADDR, Rootfs_LEN, pbuf);
+				if (!pbuf) 
 				{
 					puts("Failed to map physical memory\n");
 					return 1;
 				}	
-					
+
 				/* erase the address range.*/
 				printf("drivers flash erase...\n");
-				rc = flash->erase(flash, AU_FL_DRIVERS_ST, Drivers_LEN);
+				rc = flash->erase(flash, AU_FL_ROOTFS_ST, Rootfs_LEN);
 				if (rc) 
 				{
-					printf("SPI drivers flash sector erase failed\n");
+					printf("SPI rootfs flash sector erase failed\n");
 					return 1;
 				}
-
+				/*
 				pbuf = map_physmem((unsigned long)LOAD_ADDR, Rootfs_LEN, MAP_WRBACK);
-
+				*/
 				printf("drivers flash write...\n");
-				rc = flash->write(flash, AU_FL_DRIVERS_ST, Drivers_LEN, buf);
+				rc = flash->write(flash, AU_FL_ROOTFS_ST, Rootfs_LEN, pbuf);
 				if (rc) 
 				{
-					printf("SPI drivers flash write failed, return %d\n", rc);
+					printf("SPI rootfs flash write failed, return %d\n", rc);
 					return 1;
 				}
-			
+
 				/* earse the data from RAM to FLASH */
 				printf("flag flash earse...\n");
 
@@ -412,8 +475,46 @@ static int au_do_update(int idx, long sz)
 					return 1;
 				}
 
-				unmap_physmem(pbuf,read_len);	
+				/*unmap_physmem(pbuf,read_len);	*/
 			}	
+			else if(strncmp(buf+10,"app",3) == 0)
+			{
+				printf("FWGRADEUP=app!!!!!!!!!!!!!\n");				
+
+				rc = flash->read(flash, BACK_RA_ADDR, BACK_RA_LEN, pbuf);
+				if (!pbuf) 
+				{
+					puts("Failed to map physical memory\n");
+					return 1;
+				}	
+
+				/* erase the address range.*/
+				printf("app flash erase...\n");
+				rc = flash->erase(flash, AU_FL_APP_ST, App_LEN);
+				if (rc) 
+				{
+					printf("SPI app flash sector erase failed\n");
+					return 1;
+				}
+
+				printf("app flash write...\n");
+				rc = flash->write(flash, AU_FL_APP_ST, App_LEN, pbuf);
+				if (rc) 
+				{
+					printf("SPI rootfs flash write failed, return %d\n", rc);
+					return 1;
+				}
+
+				/* earse the data from RAM to FLASH */
+				printf("flag flash earse...\n");
+
+				rc = flash->erase(flash, PARA_ADDR, PARA_LEN);
+				if (rc) 
+				{
+					printf("SPI flash sector erase failed\n");
+					return 1;
+				}
+			}		
 		}
 		else
 		{
@@ -432,9 +533,7 @@ static int mmc_au_do_update(int idx, long sz)
 	int rc;
 	void *buf;
 	char *pbuf;
-	int ret = 0;	
-
-	printf("jiabo_idx=%d\n",idx); 	
+	int ret = 0;
 
 	//set the blue led to on
 	printf("misc_init_r before change the blue_gpio\n");
@@ -446,15 +545,9 @@ static int mmc_au_do_update(int idx, long sz)
 
 	hdr = (image_header_t *)LOAD_ADDR;
 
-	//start = aufl_layout[idx].start;
-	//len = aufl_layout[idx].end - aufl_layout[idx].start;
 	start = AU_FL_FW_ST;
 	len = AU_FL_FW_ND - AU_FL_FW_ST;
-	printf("jiabo_start=%x,jiabo_len=%x\n",start,len);	
 
-	/*
-	 * erase the address range.
-	 */
 	printf("flash erase...\n");
 	rc = flash->erase(flash, start, len);
 	if (rc) {
@@ -521,66 +614,11 @@ static int update_to_flash(void)
 	int res, cnt;
 	int uboot_updated = 0;
 	int image_found = 0;
-	printf("jiabo_update_to_flash!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	/* just loop thru all the possible files */
-	//for (i = 0; i < AU_MAXFILES; i++) {
-		//if (LOAD_ID != -1)
-			//i = LOAD_ID;
-		/* just read the header */
-		/*sz = file_fat_read(aufile[i], LOAD_ADDR,
-			sizeof(image_header_t));
-		debug("read %s sz %ld hdr %d\n",
-			aufile[i], sz, sizeof(image_header_t));
-		if (sz <= 0 || sz < sizeof(image_header_t)) {
-			debug("%s not found\n", aufile[i]);
-			if (LOAD_ID != -1)
-				break;
-			else
-				continue;
-		}*/
-
-		image_found = 1;
-
-		/*if (au_check_header_valid(i, sz) < 0) {
-			debug("%s header not valid\n", aufile[i]);
-			if (LOAD_ID != -1)
-				break;
-			else
-				continue;
-		}
-
-		sz = file_fat_read(aufile[i], LOAD_ADDR, MAX_LOADSZ);
-		debug("read %s sz %ld hdr %d\n",
-			aufile[i], sz, sizeof(image_header_t));
-		if (sz <= 0 || sz <= sizeof(image_header_t)) {
-			debug("%s not found\n", aufile[i]);
-			if (LOAD_ID != -1)
-				break;
-			else
-				continue;
-		}
-
-		if (au_check_cksum_valid(i, sz) < 0) {
-			debug("%s checksum not valid\n", aufile[i]);
-			if (LOAD_ID != -1)
-				break;
-			else
-				continue;
-		}*.
-
-		/* If u-boot had been updated, we need to
-		 * save current env to flash */
-		if (0 == strcmp((char *)AU_UBOOT, aufile[i]))
-			uboot_updated = 1;
-
-		/* this is really not a good idea, but it's what the */
-		/* customer wants. */
-		cnt = 0;		
-		res = au_do_update(i, sz);
-
-		//if (LOAD_ID != -1)
-			//break;
-	//}
+	image_found = 1;
+	if (0 == strcmp((char *)AU_UBOOT, aufile[i]))
+		uboot_updated = 1;
+	cnt = 0;		
+	res = au_do_update(i, sz);
 
 	if (1 == uboot_updated)
 		return 1;
@@ -592,7 +630,7 @@ static int update_to_flash(void)
 
 static int mmc_update_to_flash(void)
 {
-	int i = 4;
+	int i = 3;
 	long sz;
 	int res, cnt;
 	int uboot_updated = 0;
@@ -684,12 +722,11 @@ int do_auto_update(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int choose = 0;
 	int state = -1;
 	long start = -1, end = 0;
-	int ret;
-	printf("jiabo_do_auto_update!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	
-	gpio_request(GPIO_PB(14),"sdupgrade");
-	gpio_direction_input(GPIO_PB(14));
-	ret = gpio_get_value(GPIO_PB(14));
+	unsigned int ret = 0;
+
+	gpio_request(51,"sdupgrade");
+	gpio_direction_input(51);
+	ret = gpio_get_value(51) & 0x1;
 	if(ret == 0)
 	{
 		for (m = 0; m < WAIT_SECS; m++)
@@ -699,13 +736,14 @@ int do_auto_update(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				udelay(1000);	//wait 1 ms 	
 			}
 		}				
-		ret = gpio_get_value(GPIO_PB(14));
+		ret = gpio_get_value(51 & 0x1);
 		if(ret == 0)
 		{
 			printf("setup_button set long!!!!!!!!!!!!!!!!!!!\n");
 			choose = 1;		
 		}
 	}
+
 	if(choose == 1)
 	{
 		if (argc == 1)
@@ -735,7 +773,6 @@ int do_auto_update(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		} else {
 			return CMD_RET_USAGE;
 		}
-	
 		debug("device name %s!\n", "mmc");
 		stor_dev = get_dev("mmc", 0);
 		if (NULL != stor_dev) {

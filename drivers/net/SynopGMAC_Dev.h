@@ -42,6 +42,7 @@
 #include <config.h>
 #include <common.h>
 
+//#define SYNOP_DEBUG
 static inline void plat_delay(u32 delay)
 {
 	while (delay--);

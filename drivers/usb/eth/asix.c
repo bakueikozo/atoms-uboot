@@ -684,6 +684,7 @@ int asix_eth_probe(struct usb_device *dev, unsigned int ifnum,
 		return 0;
 	}
 	dev->privptr = (void *)ss;
+	//setenv("ethact","asx0");/*zm:FIXME:SHOULD NOT FORCING it*/
 	return 1;
 }
 

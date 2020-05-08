@@ -30,7 +30,8 @@
 #include <asm/arch/spi.h>
 #include <asm/arch/base.h>
 #include <linux/mtd/nand.h>
-#include <asm/arch/sfc.h>
+#include <asm/arch/sfc_nand.h>
+//#include <asm/arch/sfc.h>
 
 //#define COMMAND_MAX_LENGTH	8
 

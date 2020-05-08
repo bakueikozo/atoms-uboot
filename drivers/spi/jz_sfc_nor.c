@@ -170,12 +170,12 @@ void sfc_cmd_en(int channel, unsigned int value)
 	if(value == 1) {
 		unsigned int tmp;
 		tmp = jz_sfc_readl(SFC_TRAN_CONF(channel));
-		tmp |= CMDEN;
+		tmp |= CMD_EN;
 		jz_sfc_writel(tmp,SFC_TRAN_CONF(channel));
 	} else {
 		unsigned int tmp;
 		tmp = jz_sfc_readl(SFC_TRAN_CONF(channel));
-		tmp &= ~CMDEN;
+		tmp &= ~CMD_EN;
 		jz_sfc_writel(tmp,SFC_TRAN_CONF(channel));
 	}
 }
@@ -326,12 +326,12 @@ static void sfc_set_read_reg(unsigned int cmd, unsigned int addr,
 	jz_sfc_writel(tmp,SFC_GLB);
 
 	tmp = jz_sfc_readl(SFC_TRAN_CONF(0));
-	tmp &= ~(ADDR_WIDTH_MSK | DMYBITS_MSK | CMD_MSK | FMAT | DATEEN);
+	tmp &= ~(ADDR_WIDTH_MSK | DMYBITS_MSK | CMD_MSK | PHASE_FORMAT | DATEEN);
 	if (data_en) {
-		tmp |= (addr_len << ADDR_WIDTH_OFFSET) | CMDEN |
+		tmp |= (addr_len << ADDR_WIDTH_OFFSET) | CMD_EN |
 			DATEEN | (cmd << CMD_OFFSET);
 	} else {
-		tmp |= (addr_len << ADDR_WIDTH_OFFSET) | CMDEN |
+		tmp |= (addr_len << ADDR_WIDTH_OFFSET) | CMD_EN |
 			(cmd << CMD_OFFSET);
 	}
 	jz_sfc_writel(tmp,SFC_TRAN_CONF(0));
@@ -471,7 +471,7 @@ int sfc_init(void )
 	unsigned int i;
 	volatile unsigned int tmp;
 #ifndef CONFIG_BURNER
-	sfc_rate = 100000000;
+	sfc_rate = 50000000;
 	clk_set_rate(SSI, sfc_rate);
 #else
 	if(sfc_rate !=0 )
@@ -499,10 +499,10 @@ int sfc_init(void )
 	jz_sfc_writel(tmp,SFC_DEV_CONF);
 
 	for (i = 0; i < 6; i++) {
-		jz_sfc_writel((jz_sfc_readl(SFC_TRAN_CONF(i))& (~(TRAN_MODE_MSK | FMAT))),SFC_TRAN_CONF(i));
+		jz_sfc_writel((jz_sfc_readl(SFC_TRAN_CONF(i))& (~(TRAN_MODE_MSK | PHASE_FORMAT))),SFC_TRAN_CONF(i));
 	}
 
-	jz_sfc_writel((CLR_END | CLR_TREQ | CLR_RREQ | CLR_OVER | CLR_UNDER),SFC_INTC);
+	jz_sfc_writel((CLR_END | CLR_TREQ | CLR_RREQ | CLR_OVER | CLR_UNDR),SFC_INTC);
 
 	jz_sfc_writel(0,SFC_CGE);
 
@@ -1238,7 +1238,7 @@ void sfc_for_nand_init(int sfc_quad_mode)
 	tmp |= (CEDL | HOLDDL | WPDL | 1 << SMP_DELAY_OFFSET);
 	jz_sfc_writel(tmp,SFC_DEV_CONF);
 	for (i = 0; i < 6; i++) {
-		jz_sfc_writel((jz_sfc_readl(SFC_TRAN_CONF(i))& (~(TRAN_MODE_MSK | FMAT))),SFC_TRAN_CONF(i));
+		jz_sfc_writel((jz_sfc_readl(SFC_TRAN_CONF(i))& (~(TRAN_MODE_MSK | PHASE_FORMAT))),SFC_TRAN_CONF(i));
 	     if(sfc_quad_mode==1)
 	     {
 		unsigned int temp=0;
@@ -1248,7 +1248,7 @@ void sfc_for_nand_init(int sfc_quad_mode)
 		jz_sfc_writel(temp,SFC_TRAN_CONF(i));
 	     }
 	}
-	jz_sfc_writel((CLR_END | CLR_TREQ | CLR_RREQ | CLR_OVER | CLR_UNDER),SFC_INTC);
+	jz_sfc_writel((CLR_END | CLR_TREQ | CLR_RREQ | CLR_OVER | CLR_UNDR),SFC_INTC);
 	jz_sfc_writel(0,SFC_CGE);
 	tmp = jz_sfc_readl(SFC_GLB);
 	tmp &= ~(THRESHOLD_MSK);

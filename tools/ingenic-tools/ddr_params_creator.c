@@ -145,6 +145,10 @@ static void ddrc_base_params_creator_common(struct ddrc_reg *ddrc, struct ddr_pa
 	tmp = ps2cycle_ceil(p->private_params.ddr_base_params.tRFC,2) / 2 - 1 ;
 	if(tmp < 0)
 		tmp = 0;
+
+    if (tmp > 63) {
+        tmp = 63;
+    }
 	ASSERT_MASK(tmp,6);
 	ddrc->timing4.b.tRFC = tmp;
 
@@ -301,10 +305,10 @@ static void ddrp_base_params_creator_common(struct ddrp_reg *ddrp, struct ddr_pa
 	/* tRTP is differ for ddr2 */
 	DDRP_TIMING_SET(0,ddr_base_params,tWTR,3,1,15);
 	DDRP_TIMING_SET(0,ddr_base_params,tRP,4,2,20);
-	DDRP_TIMING_SET(0,ddr_base_params,tRCD,4,2,11);
-	DDRP_TIMING_SET(0,ddr_base_params,tRAS,5,2,31);
-	DDRP_TIMING_SET(0,ddr_base_params,tRRD,4,1,8);
-	DDRP_TIMING_SET(0,ddr_base_params,tRC,6,2,42);
+	DDRP_TIMING_SET(0,ddr_base_params,tRCD,4,2,12);
+	DDRP_TIMING_SET(0,ddr_base_params,tRAS,5,2,39);
+	DDRP_TIMING_SET(0,ddr_base_params,tRRD,4,1,9);
+	DDRP_TIMING_SET(0,ddr_base_params,tRC,6,2,58);
 	/* tCCD is differ in lpddr ddr2 lpddr2 ddr3 */
 
 	/* DTPR1 registers */
@@ -317,7 +321,8 @@ static void ddrp_base_params_creator_common(struct ddrp_reg *ddrp, struct ddr_pa
 
 	/* tMOD is used by ddr3 */
 	/* tRTODT is used by ddr3 */
-	DDRP_TIMING_SET(1,ddr_base_params,tRFC,8,0,255);
+	DDRP_TIMING_SET(1,ddr_base_params,tRFC,6,0,63);
+
 	/* tDQSCKmin is used by lpddr2 */
 	/* tDQSCKmax is used by lpddr2 */
 

@@ -31,10 +31,9 @@
 #include <asm/arch/clk.h>
 #include <power/d2041_core.h>
 
-int n;
 extern int jz_net_initialize(bd_t *bis);
 struct cgu_clk_src cgu_clk_src[] = {
-	{VPU, VPLL},
+	{VPU, MPLL},
 	{MACPHY, MPLL},
 	{MSC, APLL},
 	{SSI, MPLL},
@@ -68,113 +67,6 @@ int misc_init_r(void)
 #endif
 	/* used for usb_dete */
 	/*gpio_set_pull_dir(GPIO_PB(22), 1);*/
-
-	/*int ret = 0;
-	//set the yellow led to on
-	printf("misc_init_r before change the yellow_gpio\n");
-	ret = gpio_request(GPIO_PB(6),"yellow_gpio");	
-	printf("misc_init_r after gpio_request the yellow_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(6),0);
-        ret = gpio_get_value(GPIO_PB(6));
-	printf("misc_init_r after change the yellow_gpio ret is %d\n",ret);
-	//set the night led to off isc3s
-	ret = gpio_request(GPIO_PB(17),"night_gpio");
-        printf("misc_init_r after gpio_request the night_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(17),0);
-        ret = gpio_get_value(GPIO_PB(17));
-        printf("misc_init_r after change the night_gpio ret is %d\n",ret);
-
-	//set the night led to off isc5c1
-	ret = gpio_request(GPIO_PA(25),"night_gpio");
-        printf("misc_init_r after gpio_request the night_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PA(25),0);
-        ret = gpio_get_value(GPIO_PA(25));
-        printf("misc_init_r after change the night_gpio ret is %d\n",ret);*/
-
-	int ret = 0;
-	
-	//set the wifi enable gpio to on
-	printf("misc_init_r before change the wifi_enable_gpio\n");
-	ret = gpio_request(GPIO_PB(30),"wifi_enable_gpio"); 
-	printf("misc_init_r after gpio_request the wifi_enable_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(30),0);
-	ret = gpio_get_value(GPIO_PB(30));
-	printf("misc_init_r after change the wifi_enable_gpio ret is %d\n",ret);	
-
-	//set the yellow led to on
-	printf("misc_init_r before change the yellow_gpio\n");
-	ret = gpio_request(GPIO_PB(6),"yellow_gpio"); 
-	printf("misc_init_r after gpio_request the yellow_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(6),0);
-	ret = gpio_get_value(GPIO_PB(6));
-	printf("misc_init_r after change the yellow_gpio ret is %d\n",ret);
-	
-	//set the blue led to on
-	printf("misc_init_r before change the blue_gpio\n");
-	ret = gpio_request(GPIO_PB(7),"blue_gpio"); 
-	printf("misc_init_r after gpio_request the blue_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(7),1);
-	ret = gpio_get_value(GPIO_PB(7));
-	printf("misc_init_r after change the blue_gpio ret is %d\n",ret);
-
-	//set the night led to off isc3s
-	ret = gpio_request(GPIO_PC(17),"night_gpio");
-	printf("misc_init_r after gpio_request the night_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PC(17),0);
-	ret = gpio_get_value(GPIO_PC(17));
-	printf("misc_init_r after change the night_gpio ret is %d\n",ret);
-
-	//set the night led to off isc5c1
-	ret = gpio_request(GPIO_PA(25),"night_gpio");
-	printf("misc_init_r after gpio_request the night_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PA(25),0);
-	ret = gpio_get_value(GPIO_PA(25));
-	printf("misc_init_r after change the night_gpio ret is %d\n",ret);
-
-	//set the night led to off isc3c
-	ret = gpio_request(GPIO_PB(17),"night_gpio");
-	printf("misc_init_r after gpio_request the night_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(17),0);
-	ret = gpio_get_value(GPIO_PB(17));
-	printf("misc_init_r after change the night_gpio ret is %d\n",ret);
-
-	ret = gpio_request(GPIO_PB(15),"USB_able_gpio");
-	printf("misc_init_r after gpio_request the USB_able_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(15),1);
-	ret = gpio_get_value(GPIO_PB(15));
-	printf("misc_init_r after change the USB_able_gpio ret is %d\n",ret);
-
-	ret = gpio_request(GPIO_PB(11),"TF_able_gpio");
-	printf("misc_init_r after gpio_request the TF_able_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(11),1);
-	ret = gpio_get_value(GPIO_PB(11));
-	printf("misc_init_r after change the TF_able_gpio ret is %d\n",ret);
-
-	ret = gpio_request(GPIO_PB(31),"SPK_able_gpio");
-	printf("misc_init_r after gpio_request the SPK_able_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(31),0);
-	ret = gpio_get_value(GPIO_PB(31));
-	printf("misc_init_r after change the SPK_able_gpio ret is %d\n",ret);
-	
-	ret = gpio_request(GPIO_PB(16),"SD_able_gpio");
-	printf("misc_init_r after gpio_request the SD_able_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(16),0);
-	ret = gpio_get_value(GPIO_PB(16));
-	printf("misc_init_r after change the SD_able_gpio ret is %d\n",ret);
-
-	for (n = 0; n < 200; n++)
-	{
-		udelay(1000);	//wait 1 ms 	
-	}
-
-	//set the wifi enable gpio to on
-	printf("misc_init_r before change the wifi_enable_gpio\n");
-	ret = gpio_request(GPIO_PB(30),"wifi_enable_gpio"); 
-	printf("misc_init_r after gpio_request the wifi_enable_gpio ret is %d\n",ret);
-	ret = gpio_direction_output(GPIO_PB(30),1);
-	ret = gpio_get_value(GPIO_PB(30));
-	printf("misc_init_r after change the wifi_enable_gpio ret is %d\n",ret);
-
 	return 0;
 }
 
@@ -190,7 +82,14 @@ int board_mmc_init(bd_t *bd)
 
 int board_eth_init(bd_t *bis)
 {
-	return jz_net_initialize(bis);
+	int ret = 0;
+#ifdef CONFIG_USB_ETHER_ASIX
+	if (0 == strncmp(getenv("ethact"), "asx", 3)) {
+		run_command("usb start", 0);
+	}
+#endif
+	ret += jz_net_initialize(bis);
+	return ret;
 }
 
 #ifdef CONFIG_SPL_NOR_SUPPORT

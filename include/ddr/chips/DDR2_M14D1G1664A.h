@@ -14,15 +14,15 @@
 #define DDR_COL1 10  /* COL :  8 to 10 column address */
 
 #define DDR_BANK8 1/* Banks each chip: 0-4bank, 1-8bank */
-#define DDR_CL 6   /* CAS latency: 1 to 7 */
+#define DDR_CL 7   /* CAS latency: 1 to 7 */
 
 /*
  * DDR2 controller timing1 register
  */
 #define DDR_tRAS	DDR__ns(45)  /* tRAS: ACTIVE to PRECHARGE command period to the same bank. */
 #define DDR_tRTP	DDR__ps(7500)   /* 7.5ns READ to PRECHARGE command period. */
-#define DDR_tRP		DDR__ps(11250)  /* tRP: PRECHARGE command period to the same bank */
-#define DDR_tRCD	DDR__ps(11250)  /* ACTIVE to READ or WRITE command period to the same bank. */
+#define DDR_tRP		DDR__ps(16000)  /* tRP: PRECHARGE command period to the same bank */
+#define DDR_tRCD	DDR__ps(16000)  /* ACTIVE to READ or WRITE command period to the same bank. */
 //#define DDR_tRC		(DDR_tRAS + DDR_tRP)  /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRC		DDR__ps(56250)  /* ACTIVE to ACTIVE command period to the same bank.*/
 #define DDR_tRRD	DDR__ns(10)  /* ACTIVE bank A to ACTIVE bank B command period. */
@@ -40,8 +40,8 @@
 #define DDR_BL		 8   /* Burst length: 3 - 8 burst, 2 - 4 burst , 1 - 2 burst*/
 /*#define DDR_RL		DDR__tck(DDR_CL)  [> DDR2: Read Latency = tAL + tCL <]*/
 /*#define DDR_WL		(DDR_CL - 1)[>(DDR_tRL - 1)        DDR2: Write Latency = tAL + tCL - 1<]*/
-#define DDR_RL    DDR__tck(6)
-#define DDR_WL    DDR__tck(5)
+#define DDR_RL    DDR__tck(7)
+#define DDR_WL    DDR__tck(6)
 #define DDR_tCCD	DDR__tck(2)      /* CAS# to CAS# command delay , tCK*/
 #define DDR_tRTW	(((DDR_BL > 4) ? 6 : 4) + 1) /* 4 in case of BL=4, 6 in case of BL=8 */
 #define DDR_tFAW	DDR__ns(45)     /* Four bank activate period, ns */

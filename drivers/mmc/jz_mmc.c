@@ -120,16 +120,16 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 #ifndef CONFIG_SPL_BUILD
 	jz_mmc_writel(0xffffffff, priv, MSC_IMASK);
 	/* clear interrupts */
-	jz_mmc_writel(0xffffffff, priv, MSC_IREG);
+	jz_mmc_writel(0xffffffff, priv, MSC_IFLG);
 #endif
 
 	/* start the command (& the clock) */
-	jz_mmc_writel(MSC_STRPCL_START_OP, priv, MSC_STRPCL);
+	jz_mmc_writel(MSC_CTRL_START_OP, priv, MSC_CTRL);
 
 	/* wait for completion */
-	while (!(stat = (jz_mmc_readl(priv, MSC_IREG) & (MSC_IREG_END_CMD_RES | MSC_IREG_TIME_OUT_RES))))
+	while (!(stat = (jz_mmc_readl(priv, MSC_IFLG) & (MSC_IREG_END_CMD_RES | MSC_IREG_TIME_OUT_RES))))
 		udelay(10000);
-	jz_mmc_writel(stat, priv, MSC_IREG);
+	jz_mmc_writel(stat, priv, MSC_IFLG);
 	if (stat & MSC_IREG_TIME_OUT_RES)
 		return TIMEOUT;
 
@@ -153,7 +153,7 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 
 	if (cmd->resp_type == MMC_RSP_R1b) {
 		while (!(jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_PRG_DONE));
-		jz_mmc_writel(MSC_IREG_PRG_DONE, priv, MSC_IREG);
+		jz_mmc_writel(MSC_IREG_PRG_DONE, priv, MSC_IFLG);
 	}
 
 #ifndef CONFIG_SPL_BUILD
@@ -163,12 +163,12 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		const void *buf = data->src;
 		while (sz--) {
 			uint32_t val = get_unaligned_le32(buf);
-			while (!(jz_mmc_readl(priv, MSC_IREG) & MSC_IREG_TXFIFO_WR_REQ));
+			while (!(jz_mmc_readl(priv, MSC_IFLG) & MSC_IREG_TXFIFO_WR_REQ));
 			jz_mmc_writel(val, priv, MSC_TXFIFO);
 			buf += 4;
 		}
 		while (!(jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_PRG_DONE));
-		jz_mmc_writel(MSC_IREG_PRG_DONE, priv, MSC_IREG);
+		jz_mmc_writel(MSC_IREG_PRG_DONE, priv, MSC_IFLG);
 	} else if (data && (data->flags & MMC_DATA_READ)) {
 		/* read the data */
 		int sz = data->blocks * data->blocksize;
@@ -196,8 +196,8 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 				stat = jz_mmc_readl(priv, MSC_STAT);
 			} while (!(stat & MSC_STAT_DATA_FIFO_EMPTY));
 		} while (!(stat & MSC_STAT_DATA_TRAN_DONE));
-		while (!(jz_mmc_readl(priv, MSC_IREG) & MSC_IREG_DATA_TRAN_DONE));
-		jz_mmc_writel(MSC_IREG_DATA_TRAN_DONE, priv, MSC_IREG);
+		while (!(jz_mmc_readl(priv, MSC_IFLG) & MSC_IREG_DATA_TRAN_DONE));
+		jz_mmc_writel(MSC_IREG_DATA_TRAN_DONE, priv, MSC_IFLG);
 	}
 #else
 	if (data && (data->flags & MMC_DATA_READ)) {
@@ -228,9 +228,9 @@ static int jz_mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 			} while (!(stat & MSC_STAT_DATA_FIFO_EMPTY));
 		} while (!(stat & MSC_STAT_DATA_TRAN_DONE));
 
-		while (!(jz_mmc_readl(priv, MSC_IREG) & MSC_IREG_DATA_TRAN_DONE));
+		while (!(jz_mmc_readl(priv, MSC_IFLG) & MSC_IREG_DATA_TRAN_DONE));
 
-		jz_mmc_writel(MSC_IREG_DATA_TRAN_DONE, priv, MSC_IREG);
+		jz_mmc_writel(MSC_IREG_DATA_TRAN_DONE, priv, MSC_IFLG);
 	}
 #endif
 
@@ -300,11 +300,11 @@ static int jz_mmc_core_init(struct mmc *mmc)
 	unsigned int clkrt = jz_mmc_readl(priv, MSC_CLKRT);
 
 	/* reset */
-	jz_mmc_writel(MSC_STRPCL_RESET, priv, MSC_STRPCL);
-#if defined(CONFIG_M200) || defined(CONFIG_T15) || defined(CONFIG_T10) || defined(CONFIG_T20)
-	tmp = jz_mmc_readl(priv, MSC_STRPCL);
-	tmp &= ~MSC_STRPCL_RESET;
-	jz_mmc_writel(tmp, priv, MSC_STRPCL);
+	jz_mmc_writel(MSC_CTRL_RESET, priv, MSC_CTRL);
+#if defined(CONFIG_M200) || defined(CONFIG_T15) || defined(CONFIG_T10) || defined(CONFIG_T20) || defined(CONFIG_T21) || defined(CONFIG_T30) || defined(CONFIG_T31)
+	tmp = jz_mmc_readl(priv, MSC_CTRL);
+	tmp &= ~MSC_CTRL_RESET;
+	jz_mmc_writel(tmp, priv, MSC_CTRL);
 #else
 	while (jz_mmc_readl(priv, MSC_STAT) & MSC_STAT_IS_RESETTING);
 #endif

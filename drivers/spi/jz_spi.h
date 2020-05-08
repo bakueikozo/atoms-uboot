@@ -18,13 +18,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
-*/
+ */
 
 #ifndef __JZ_SPI_H__
 #define __JZ_SPI_H__
 #ifdef CONFIG_JZ_SFC
+#ifdef CONFIG_SFC_NAND
+#include <asm/arch/sfc_nand.h>
+#else
 #include <asm/arch/sfc.h>
 #endif
+#endif /* CONFIG_JZ_SFC */
 #define SPL_TYPE_FLAG_LEN       6
 #define SSI_BASE SSI0_BASE
 #define COMMAND_MAX_LENGTH		8
@@ -107,19 +111,19 @@ struct jz_spi_slave {
 	unsigned int max_hz;
 };
 struct jz_spi_support_from_burner{
-		unsigned int id_manufactory;
-		unsigned char id_device;
-		char name[32];
-		int page_size;
-		int oobsize;
-		int sector_size;
-		int block_size;
-		int size;
-		int page_num;
-		uint32_t tRD_maxbusy;
-		uint32_t tPROG_maxbusy;
-		uint32_t tBERS_maxbusy;
-		unsigned short column_cmdaddr_bits;
+	unsigned int id_manufactory;
+	unsigned char id_device;
+	char name[32];
+	int page_size;
+	int oobsize;
+	int sector_size;
+	int block_size;
+	int size;
+	int page_num;
+	uint32_t tRD_maxbusy;
+	uint32_t tPROG_maxbusy;
+	uint32_t tBERS_maxbusy;
+	unsigned short column_cmdaddr_bits;
 };
 struct nand_param_from_burner {
 	int version;
@@ -186,6 +190,27 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		.sector_size      = (64 * 1024),
 		.addr_size = 3,
 		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x40,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "MX25L25645G",
+		.id_manufactory = 0xc22019,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 4,
+		.size           = (32 * 1024 * 1024),
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR,
@@ -307,12 +332,96 @@ static struct jz_spi_support jz_spi_support_table[] = {
 
 	},
 	{
-		.name           = "XT25F128A",
+		.name           = "W25Q256JV",
+		.id_manufactory = 0xef4019,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 4,
+		.size           = (32 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 6,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x0200,//his bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_IO_FAST_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_IO_QUAD,
+#endif
+		}
+	},
+	{
+		.name           = "XM25QH128A",
 		.id_manufactory = 0x207018,
 		.page_size       = 256,
 		.sector_size      = (64 * 1024),
 		.addr_size = 3,
 		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x40,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "XM25QH64A",
+		.id_manufactory = 0x207017,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x40,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "XM25QH128B",
+		.id_manufactory = 0x206018,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x40,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x40,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "XM25QH64B",
+		.id_manufactory = 0x206017,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
 		.quad_mode = {
 			.dummy_byte = 8,
 			.RDSR_CMD = CMD_RDSR,
@@ -349,6 +458,27 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		},
 	},
 	{
+		.name           = "EN25QH128A",
+		.id_manufactory = 0x1c7018,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 3,
+		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
 		.name           = "FM25Q64",
 		.id_manufactory = 0xF83217,
 		.page_size       = 256,
@@ -370,8 +500,197 @@ static struct jz_spi_support jz_spi_support_table[] = {
 		},
 	},
 	{
-		.name           = "FM25Q64",
-		.id_manufactory = 0x1C7018,
+		.name           = "BY25Q64AS",
+		.id_manufactory = 0x684017,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "BY25Q128AS",
+		.id_manufactory = 0x684018,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "ZB25VQ64",
+		.id_manufactory = 0x5e4017,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "ZB25VQ128",
+		.id_manufactory = 0x5e4018,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR_1,
+			.WRSR_CMD = CMD_WRSR_1,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "XT25F64B",
+		.id_manufactory = 0x0b4017,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "XT25F128B",
+		.id_manufactory = 0x0b4018,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 3,
+		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "FS25Q064F2TFI1",
+		.id_manufactory = 0xa14017,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "FS25Q128F2TFI",
+		.id_manufactory = 0xa14018,
+		.page_size       = 256,
+		.sector_size      = (64 * 1024),
+		.addr_size = 3,
+		.size           = (16 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "P25Q64H",
+		.id_manufactory = 0x856017,
+		.page_size       = 256,
+		.sector_size      = (32 * 1024),
+		.addr_size = 3,
+		.size           = (8 * 1024 * 1024),
+		.quad_mode = {
+			.dummy_byte = 8,
+			.RDSR_CMD = CMD_RDSR,
+			.WRSR_CMD = CMD_WRSR,
+			.RDSR_DATE = 0x2,//the data is write the spi status register for QE bit
+			.RD_DATE_SIZE = 1,
+			.WRSR_DATE = 0x2,//this bit should be the flash QUAD mode enable
+			.WD_DATE_SIZE = 1,
+			.cmd_read = CMD_QUAD_READ,
+#ifdef CONFIG_JZ_SFC
+			.sfc_mode = TRAN_SPI_QUAD,
+#endif
+		},
+	},
+	{
+		.name           = "P25Q128H",
+		.id_manufactory = 0x856018,
 		.page_size       = 256,
 		.sector_size      = (64 * 1024),
 		.addr_size = 3,

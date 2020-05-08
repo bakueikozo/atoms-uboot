@@ -39,7 +39,6 @@
  * HUB "Driver"
  * Probes device for being a hub and configurate it
  */
-
 #include <common.h>
 #include <command.h>
 #include <asm/processor.h>
